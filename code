@@ -1,0 +1,54 @@
+const int LDR_PIN = A0;     
+const int PIR_PIN = 2;      
+const int LIGHT_PIN = 9;     
+
+const int BRIGHT_OFF = 0;    
+const int BRIGHT_DIM = 45;   
+const int BRIGHT_FULL = 255; 
+
+const unsigned long HOLD_TIME = 5000;
+unsigned long motionTimer = 0;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(PIR_PIN, INPUT);
+  pinMode(LIGHT_PIN, OUTPUT);
+
+  analogWrite(LIGHT_PIN, BRIGHT_OFF);
+  Serial.println("=====================================");
+  Serial.println("Smart Street Light System Started!");
+  Serial.println("=====================================");
+}
+
+void loop() {
+  int ldrValue = analogRead(LDR_PIN); 
+  int motion = digitalRead(PIR_PIN);   
+
+  bool isDark = (ldrValue > 500);
+
+  if (!isDark) {
+    analogWrite(LIGHT_PIN, BRIGHT_OFF);
+    Serial.print("Daytime (Sunlight) -> Light: OFF (0%) | LDR: ");
+    Serial.println(ldrValue);
+  }
+  else {
+    if (motion == HIGH) {
+      motionTimer = millis(); 
+      analogWrite(LIGHT_PIN, BRIGHT_FULL);
+      Serial.print("Night + MOTION DETECTED! -> Light: 100% FULL BRIGHT | LDR: ");
+      Serial.println(ldrValue);
+    }
+    else if (millis() - motionTimer < HOLD_TIME) {
+      analogWrite(LIGHT_PIN, BRIGHT_FULL);
+      Serial.println("Night (Holding Full Brightness...)");
+    }
+ 
+    else {
+      analogWrite(LIGHT_PIN, BRIGHT_DIM); 
+      Serial.print("Night (Empty Road) -> Light: 20% DIM Mode (Saving Power) | LDR: ");
+      Serial.println(ldrValue);
+    }
+  }
+
+  delay(500); 
+}
